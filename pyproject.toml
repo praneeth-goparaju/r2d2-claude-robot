@@ -1,0 +1,16 @@
+# Lint config. Run: ruff check .   (pip install ruff)
+# The code is deliberately compact (several statements per line, long lines),
+# so style-only rules are off; the rules kept catch real mistakes.
+[tool.ruff]
+target-version = "py313"   # Raspberry Pi OS Trixie
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "W", "B", "I", "UP", "SIM", "C4", "RUF"]
+ignore = [
+    "E701", "E702", "E731",  # one-liners and lambda assignments are the house style
+    "SIM105",                # try/except/pass reads fine for hardware cleanup
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["robo"]

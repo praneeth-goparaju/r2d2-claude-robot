@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+models/
+snapshots/
+recordings/
+*.wav
+.robo.env
+tts_cache/
+tests/mock_view.jpg
+.DS_Store
+sounds/
+diary/
+state.json
+
+# Your own household profile (copy robo/family.example.yaml); never committed
+robo/family.yaml

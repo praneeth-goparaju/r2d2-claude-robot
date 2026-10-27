@@ -1,0 +1,44 @@
+# Start the robot when the Pi starts, without administrator rights.
+#
+# Raspberry Pi OS logs the Pi's user in by itself at every start, and this
+# service belongs to that user: it starts with the login, as the same user that
+# owns the sound service (PipeWire), so the voice comes out of the speaker.
+# Install, as the normal user (no sudo):
+#   mkdir -p ~/.config/systemd/user
+#   cp ~/robo-picarx/robo-user.service ~/.config/systemd/user/robo.service
+#   systemctl --user daemon-reload && systemctl --user enable --now robo
+# Watch it:    journalctl --user -u robo -f      (the newest run is also in /tmp/talk.log)
+# Restart it:  systemctl --user restart robo      Stop it: systemctl --user stop robo
+# Not at boot any more: systemctl --user disable robo
+#
+# robo.service (the other file) does the same as root for a Pi without the
+# desktop login; use one or the other, not both.
+[Unit]
+Description=R2-D2 voice assistant (PiCar-X)
+After=pipewire.service wireplumber.service pipewire-pulse.service
+Wants=pipewire.service wireplumber.service
+# give up after 5 failed starts in 3 minutes instead of restarting forever
+StartLimitIntervalSec=180
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=%h/robo-picarx
+# without this Python holds its output back and the log stays empty
+Environment=PYTHONUNBUFFERED=1
+# the sound service and the Wi-Fi need a moment after the login
+ExecStartPre=/bin/sleep 6
+# full volume on the speaker, whatever the desktop remembered
+ExecStartPre=-/usr/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
+ExecStartPre=-/usr/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1.0
+ExecStart=/usr/bin/python3 -u -m robo.main
+StandardOutput=truncate:/tmp/talk.log
+StandardError=inherit
+Restart=on-failure
+RestartSec=5
+# "systemctl stop" sends this; the robot stops its motors on it
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+[Install]
+WantedBy=default.target

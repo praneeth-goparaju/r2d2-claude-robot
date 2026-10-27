@@ -1,0 +1,18 @@
+anthropic>=1.0            # direct Messages API brain (uses ANTHROPIC_API_KEY)
+claude-agent-sdk>=0.1     # fallback brain on the Claude Code login
+vosk>=0.3.45
+# The better recognizer (LISTEN_ENGINE = "moonshine") is installed by setup_pi.sh, not
+# from here: its package lists numba and librosa, which only its file loader uses.
+#   pip install tokenizers huggingface-hub && pip install useful-moonshine-onnx --no-deps
+SpeechRecognition>=3.12   # 3.12 is the first to work on Python 3.13
+# On the Pi, robot-hat / vilib / picar-x come from SunFounder's install scripts,
+# not from pip. They are imported lazily, so the Mac never needs them.
+# PyAudio is required by SpeechRecognition's Microphone on the Pi:
+#   sudo apt install python3-pyaudio portaudio19-dev
+pyyaml>=6.0
+pillow>=10
+piper-tts>=1.3           # the local voice; its voice file is downloaded by setup_pi.sh into models/piper/
+edge-tts>=7              # the online voice, used when VOICE_ENGINE = "edge" or Piper is missing
+# On the Pi the mp3 player for edge-tts: sudo apt install mpg123
+# OLED face (Pi only): sudo pip3 install luma.oled --break-system-packages
+# Controller driving (Pi only): sudo apt install python3-pygame

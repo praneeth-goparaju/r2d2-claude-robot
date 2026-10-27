@@ -1,0 +1,51 @@
+# Example family profile. Copy it to robo/family.yaml and fill in your own
+# household; robo/family.yaml is git-ignored, so your details stay on your Pi.
+# The brain reads robo/family.yaml at startup and falls back to this example.
+# Keep it to things the robot may say out loud to anyone in the house.
+home: "a house in a small town"
+languages: ["English", "German"]
+people:
+  - name: Alex
+    role: parent
+    notes: looks after the robot's batteries, likes hearing how things work
+  - name: Sam
+    role: parent
+    notes: likes jokes and riddles; ask before driving into the kitchen
+  - name: Mia
+    role: daughter, 8 years old
+    notes: loves drawing and space, likes riddles and being challenged.
+  - name: Leo
+    role: son, 4 years old
+    notes: at nursery, loves animals and building blocks. Keep sentences short and silly with him.
+birthdays:   # month-day; the robot sings and celebrates on the day
+  Alex: "03-14"
+  Sam: "07-01"
+  Mia: "11-23"
+  Leo: "05-30"
+rules:
+  - Never go near the stairs. If the cliff sensor stops you, back up and say so.
+  - Do not drive while someone is standing right in front of you.
+  - If a child says stop, stop at once and wait.
+games:
+  - name: I spy
+    how: Look around, pick an object in the image, give a colour clue, let them guess. Three guesses, then reveal.
+  - name: Quiz
+    how: Ask the older child three questions on a topic they name. Ask the younger child to count things you can see or name colours.
+  - name: Dance
+    how: Say a beat out loud, wiggle the steering left and right in place, and pan the camera to the music. Thirty seconds, then bow by tilting the camera down.
+  - name: Hide and seek
+    how: Say "I count to ten", wait, then drive in short steps and look around until you see the person. Say where they are.
+  - name: Follow me
+    how: Look for the person in the image, turn towards them, drive one short step, look again. Stop when closer than 50 cm.
+  - name: Story time
+    how: Tell a short story (under two minutes) with the listener as the hero. Use play_sound for effects, a trick at dramatic moments (peekaboo for a surprise, shake for danger, nod for a happy ending), and switch voice style for different characters (giant, chipmunk). End with the normal voice.
+  - name: Simon says
+    how: Give commands like "Simon says nod" and do the trick yourself; sometimes leave out "Simon says" and catch them. Three rounds, then tada for the winner.
+  - name: Freeze Dance
+    how: Everyone dances while the music plays and freezes the moment it stops. Call freeze_dance for each round and look at the two photos; whoever moved is out, with [sound:sad_trombone]. The last one dancing wins, with [sound:fanfare] and the celebrate trick.
+  - name: Copy My Dance
+    how: Like Simon, with dance moves. Call copy_my_dance with new_game true, then they copy the moves in order. Each round adds a move. A mistake gets [sound:sad_trombone] and a new game; a long dance copied right gets [sound:fanfare].
+  - name: Name That Tune
+    how: Call name_that_tune and let them guess the song, with [sound:ticking] while they think. Reveal with [sound:drumroll], then [sound:fanfare] for a right guess or [sound:sad_trombone] for a wrong one. If nobody knows, call it with hint true. Keep score and name a winner after five songs.
+  - name: Silly voices
+    how: Say the same sentence in robot, giant and chipmunk voices and let them pick your voice for the next five minutes.

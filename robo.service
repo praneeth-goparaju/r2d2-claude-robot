@@ -1,0 +1,30 @@
+# Start the assistant on boot. setup_pi.sh installs it with /home/pi replaced by
+# your own home folder (the Pi user is not always called pi), then:
+#   sudo systemctl enable --now robo
+# Logs: journalctl -u robo -f      Stop: sudo systemctl stop robo
+# Runs as root for the HAT speaker, but with HOME set to your home folder so it
+# uses your Claude Code login. Files it writes in the repo are handed back to
+# the repo's owner (robo/memory.py: own), so normal runs can still write them.
+[Unit]
+Description=R2-D2 voice assistant (PiCar-X)
+After=network-online.target sound.target
+Wants=network-online.target
+# give up after 5 failed starts in 2 minutes instead of restarting forever
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/robo-picarx
+Environment=HOME=/home/pi
+EnvironmentFile=-/home/pi/.robo.env
+Environment=PATH=/home/pi/.local/bin:/usr/local/bin:/usr/bin:/bin
+# without this Python holds its output back and journalctl stays empty
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -m robo.main
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
