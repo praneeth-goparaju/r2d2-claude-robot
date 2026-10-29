@@ -52,39 +52,29 @@ household, and a set of **tools** it may call, such as `look`, `drive`,
 goes through the same safety checks.
 
 ```mermaid
-flowchart LR
-    kid(["🧒 'Hey R2-D2,<br>what do you see?'"])
-
-    subgraph pi["Raspberry Pi (this repo)"]
-        ears["👂 Ears<br>robo/voice.py<br>Vosk spots the name and 'stop'"]
-        loop["🔁 Main loop<br>robo/main.py"]
-        tools["🧰 Tools<br>robo/tools.py"]
-        safety["🛡️ Safety checks<br>robo/car.py"]
-        mouth["🔊 Voice<br>robo/voice.py"]
-        face["😊 Face<br>robo/face.py"]
-    end
-
-    subgraph cloud["Online"]
-        claude["🧠 Claude<br>Messages API or Agent SDK"]
-        google["Google speech<br>optional"]
-    end
-
-    subgraph car["PiCar-X"]
-        cam["📷 Camera"]
-        motors["⚙️ Motors and servos"]
-        sensors["📏 Distance and floor sensors"]
-    end
+flowchart TD
+    kid(["🧒 'Hey R2-D2, what do you see?'"])
+    ears["👂 Ears · robo/voice.py<br>Vosk hears the name and 'stop'"]
+    loop["🔁 Main loop · robo/main.py"]
+    claude["🧠 Claude<br>Messages API or Agent SDK"]
+    tools["🧰 Tools · robo/tools.py<br>look, drive, dance, play_sound ..."]
+    safety["🛡️ Safety checks · robo/car.py"]
+    cam["📷 Camera"]
+    motors["⚙️ Motors and servos"]
+    sensors["📏 Distance and floor sensors"]
+    out["🔊 Voice and 😊 face"]
 
     kid --> ears --> loop
-    ears <-.-> google
-    loop <--> claude
+    loop <-- "what was said,<br>the answer" --> claude
     claude -- "tool calls" --> tools
     tools --> cam
     tools --> safety --> motors
-    sensors --> safety
-    loop --> mouth --> kid
-    loop --> face
+    sensors -- "stop!" --> safety
+    loop --> out --> kid
 ```
+
+Speech can optionally go through Google for better ears and a better voice
+([below](#google-voice-and-ears-optional)); Claude is the brain either way.
 
 ### One question, start to finish
 
@@ -111,17 +101,14 @@ sequenceDiagram
 
 ### Two brains, one set of tools
 
-```mermaid
-flowchart TD
-    start{"ANTHROPIC_API_KEY<br>in ~/.robo.env?"}
-    start -- yes --> api["DirectBrain<br>robo/brain_api.py<br>Messages API, fastest"]
-    start -- no --> sdk["Brain<br>robo/brain.py<br>Claude Agent SDK,<br>uses the Claude Code login"]
-    api --> same["Same prompt, same tools in robo/tools.py,<br>same safety checks"]
-    sdk --> same
-```
+| Brain | Used when | Speed |
+|---|---|---|
+| `DirectBrain` in `robo/brain_api.py`, the Messages API | `ANTHROPIC_API_KEY` is in `~/.robo.env` (the default) | fastest |
+| `Brain` in `robo/brain.py`, the Claude Agent SDK | no key, so it uses the Claude Code login | a little slower |
 
-`ROBO_BRAIN=api|agent|auto` in `~/.robo.env` forces a choice. A new tool is
-written once and both brains can use it.
+Both get the same instructions, the same tools in `robo/tools.py` and the same
+safety checks, so a new tool is written once. `ROBO_BRAIN=api|agent|auto` in
+`~/.robo.env` forces a choice.
 
 **No extra cost on a Max plan.** Max plans include a monthly API credit that
 covers the Messages API and the Agent SDK. Put an API key from the Console
@@ -130,39 +117,23 @@ credit. `MAX_TURNS_PER_DAY` keeps it from being used up.
 
 ## Build your own
 
-<table>
-<tr>
-<td width="50%" valign="top">
+**You need:** a SunFounder PiCar-X 2.0 kit, a Raspberry Pi 4 with a 32 GB
+microSD card, a USB microphone if your Robot HAT is V4 (V5 has one), and an
+Anthropic API key or a Claude account. Optional: a Google Cloud key, a small
+OLED screen for the face, an Xbox controller.
 
-**You need**
-
-- SunFounder PiCar-X 2.0 kit
-- Raspberry Pi 4 and a 32 GB microSD card
-- A USB microphone if your Robot HAT is V4 (V5 has one)
-- An Anthropic API key, or a Claude account
-- Optional: Google Cloud key, OLED screen, Xbox controller
-
-</td>
-<td width="50%" valign="top">
-
-**Then**
+| | Step | Time |
+|---|---|---|
+| 🔧 | Build the car with SunFounder's instructions | about an hour |
+| 💾 | Flash Raspberry Pi OS (64-bit) with hostname `r2d2`, SSH and Wi-Fi | 10 minutes |
+| ❓ | Run `bash setup_pi.sh` and answer its questions | 2 minutes |
+| ⏳ | It installs everything by itself | 15 to 30 minutes |
+| 🎚️ | Switch the sound on and calibrate with SunFounder's scripts | 15 minutes |
+| 🤖 | Run the self check, then say "Hey R2-D2!" | |
 
 ```bash
 git clone https://github.com/praneeth-goparaju/r2d2-claude-robot.git ~/robo-picarx
 cd ~/robo-picarx && bash setup_pi.sh
-```
-
-The script asks how you want the robot first, then installs everything.
-
-</td>
-</tr>
-</table>
-
-```mermaid
-flowchart LR
-    a["🛒 Get the parts"] --> b["🔧 Build the car"] --> c["💾 Flash the card"]
-    c --> d["❓ Answer the questions<br>setup_pi.sh"] --> e["⏳ Install<br>15 to 30 min"]
-    e --> f["🎚️ Sound and calibration"] --> g["✅ Self check"] --> h["🤖 'Hey R2-D2!'"]
 ```
 
 The questions the script asks:
@@ -201,12 +172,6 @@ driving off the table.
 
 Numbered in the order to try them; each one proves one more part works.
 
-```mermaid
-flowchart LR
-    p0["00<br>self check"] --> p1["01<br>drive test"] --> p2["02<br>say hello"] --> p3["03<br>what do<br>you see"] --> p4["04<br>patrol"] --> p5["05<br>talk"]
-    p6["06<br>controller<br>drive"]
-```
-
 | Program | What it does | Needs |
 |---|---|---|
 | `00_self_check.py` | Tests battery, sensors, camera, ears, internet, voice, temperature and disk, and says what works | car |
@@ -227,19 +192,12 @@ talk its way past them.
 
 ```mermaid
 flowchart TD
-    ask["🧠 Claude calls drive"] --> t["🧰 robo/tools.py<br>only the moves on offer"]
-    t --> n{"🌙 Night?"}
-    n -- yes --> no1["❌ refuses"]
-    n -- no --> b{"🔋 Battery"}
-    b -- "below 6.8 V" --> no2["❌ refuses"]
-    b -- "below 7.15 V" --> short["1 second moves only"]
-    b -- ok --> caps["⏱️ speed and time caps"]
-    short --> caps
-    caps --> go["⚙️ motors run"]
-    go --> watch{"while moving"}
-    watch -- "something within 25 cm<br>or no reading" --> stop["🛑 stop"]
-    watch -- "edge of a table or stairs" --> stop
-    watch -- "someone says 'stop'" --> stop
+    ask["🧠 Claude asks to drive"] --> t["🧰 robo/tools.py: only the moves on offer"]
+    t --> n["🌙 Night (20:00 to 07:00)? → refused"]
+    n --> b["🔋 Battery below 6.8 V? → refused<br>below 7.15 V? → 1 second moves only"]
+    b --> caps["⏱️ Speed and time capped<br>slower and shorter when reversing"]
+    caps --> go["⚙️ Motors run"]
+    go --> watch["👀 While moving, it stops at once for:<br>something within 25 cm, no distance reading,<br>the edge of a table or stairs, or someone saying 'stop'"]
 ```
 
 - Speed is capped at `MAX_SPEED` (40 of 100) and one move at `MAX_MOVE_SECONDS` (3).
