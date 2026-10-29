@@ -35,7 +35,7 @@ like him with a [sound:...] tag in your reply: chirp when you greet someone or a
 whistle_up when you are curious, whistle_down when you are sad or something
 went wrong, chatter when you are excited. One sound per reply at most, and none
 for a plain factual answer or at night."""
-LANGUAGE = "en"          # "en" or "de"; picks the Vosk model and the TTS voice
+LANGUAGE = "en"          # "en" or "de"; picks the Vosk model and the TTS voice (ROBO_LANGUAGE in ~/.robo.env wins)
 # What turns your speech into text.
 #   "google":    Google Cloud Speech-to-Text, quicker than the Pi and good with
 #                children's voices. Needs GOOGLE_API_KEY in ~/.robo.env (README,
@@ -311,6 +311,12 @@ try:
     LON = float(os.environ.get("ROBO_LON", LON))
 except ValueError:
     pass  # a typo in ~/.robo.env should not stop the robot; keep the defaults
+# setup_questions.py writes these two: ROBO_LANGUAGE=de, and ROBO_MIC_NAME=default
+# for a Robot HAT V5, whose microphone is the system default.
+if os.environ.get("ROBO_LANGUAGE") in VOSK_MODELS:
+    LANGUAGE = os.environ["ROBO_LANGUAGE"]
+if os.environ.get("ROBO_MIC_NAME"):
+    MIC_NAME = None if os.environ["ROBO_MIC_NAME"].lower() == "default" else os.environ["ROBO_MIC_NAME"]
 
 # The household profile: your own robo/family.yaml if it exists, else the example.
 FAMILY_FILE = ROOT / "robo" / "family.yaml"

@@ -7,6 +7,9 @@ in `robo/config.py`. The version is printed on the HAT. The brain is this Python
 listens for "Hey R2-D2", sends what you said to Claude, Claude looks through the
 camera tool and drives the car through a small set of tools.
 
+**To build your own, follow [docs/SETUP.md](docs/SETUP.md):** what to buy, then step by step from
+an empty microSD card to a robot that answers, set up the way you choose.
+
 **No extra cost.** Max plans include a monthly API credit ($100 on Max 5x) that covers the
 Messages API and the Agent SDK. Put an API key from the Console organisation linked to the
 plan in `~/.robo.env` as `ANTHROPIC_API_KEY=...` (never in the repo) and the robot spends
@@ -33,6 +36,7 @@ so a new tool is written once.
 | `robo/face.py` | Eyes and mouth on a 0.96 inch I2C OLED. Claude can show a feeling with the `express` tool. |
 | `robo/main.py` | The assistant loop: wake word (or `--button` push-to-talk on HAT pin D0), listen, think, act, speak. |
 | `robo.service` | systemd unit so the assistant starts on boot; `setup_pi.sh` installs it for your user. |
+| `setup_pi.sh`, `setup_questions.py` | The install on the Pi. It asks how you want the robot set up first ([docs/SETUP.md](docs/SETUP.md)); `python3 setup_questions.py` changes an answer later. |
 | `tests/` | Safety and plumbing tests: `python -m unittest -v`. Lint with `ruff check .` (config in `pyproject.toml`). |
 | `programs/` | Standalone programs, numbered in the order to try them. |
 
@@ -54,38 +58,24 @@ without the car driving off the table.
 
 ## Set up the Pi (once the PiCar-X is assembled)
 
-1. Flash **Raspberry Pi OS (64-bit)** with Raspberry Pi Imager: the recommended
-   entry, Debian 13 "Trixie", which is what SunFounder's current PiCar-X 2.0 docs
-   use. They warn against 32-bit. In Imager's settings set hostname `r2d2`,
-   enable SSH, and enter the Wi-Fi password. Then `ssh <user>@r2d2.local`.
-2. Clone the repo on the Pi into `~/robo-picarx` (the start-at-boot service
-   expects that folder name):
-   ```bash
-   git clone https://github.com/praneeth-goparaju/r2d2-claude-robot.git ~/robo-picarx
-   ```
-   Then run the setup script. It installs SunFounder's `robot-hat`, `vilib` and
-   `picar-x`, this project's requirements and the Vosk speech model, and creates
-   the key file. Reboot when it is done:
-   ```bash
-   cd ~/robo-picarx && bash setup_pi.sh
-   ```
-3. Create an API key in the Console organisation linked to your Max plan
-   (claude.ai → Settings → Billing → monthly API credits; ideally a separate
-   workspace "robo" with a monthly spend limit) and paste it into `~/.robo.env`
-   on the Pi as `ANTHROPIC_API_KEY=...`. The setup script creates the file.
-   Alternative: run `claude` over SSH and log in with the Max account.
-4. Once the Robot HAT is mounted: `cd ~/robot-hat && sudo bash i2samp.sh`, then
-   reboot. If there is no sound, `robot_hat doctor` says which part is broken.
-   Run SunFounder's `sudo python3 servo_zeroing.py` **before** assembling the servos.
-5. Calibrate on the real car with SunFounder's scripts, so straight is straight
-   and the edge stop works on your floor:
-   `cd ~/picar-x/example && sudo python3 1.cali_servo_motor.py` (steering, camera,
-   motor direction), then `sudo python3 1.cali_grayscale.py` over black tape and
-   lifted in the air (cliff reference).
-6. Sound on the Robot HAT needs root: run programs with `sudo -E python3 ...`
-   (`-E` keeps the environment variable).
-   For German, download `vosk-model-small-de-0.15` into `models/` the same way
-   and set `LANGUAGE = "de"` in `robo/config.py`.
+The full walk-through is [docs/SETUP.md](docs/SETUP.md). In short, on a fresh
+Raspberry Pi OS (64-bit, Debian 13 "Trixie") with SSH on:
+
+```bash
+sudo apt install -y git
+git clone https://github.com/praneeth-goparaju/r2d2-claude-robot.git ~/robo-picarx
+cd ~/robo-picarx && bash setup_pi.sh
+```
+
+Keep the folder name `~/robo-picarx`: the start-at-boot service looks for it.
+The script first asks for your Claude key (or uses the Claude Code login), an
+optional Google key, English or German, the Robot HAT version, your town, your
+household and whether to start at boot. Then it installs SunFounder's
+`robot-hat`, `vilib` and `picar-x`, this project and the speech models, which
+takes 15 to 30 minutes. After a reboot: sound (`sudo bash i2samp.sh` in
+`~/robot-hat`), calibration with SunFounder's scripts, then
+`sudo -E python3 programs/00_self_check.py`. Sound on the Robot HAT needs root,
+so programs run with `sudo -E` (`-E` keeps the environment).
 
 ## Google voice and ears (optional, recommended)
 
@@ -103,7 +93,7 @@ name, the answer after "Yes?", and what is said during a conversation.
    **Cloud Speech-to-Text API**.
 3. Under APIs & Services → Credentials → Create credentials → API key. Edit the
    key: under "API restrictions" pick only those two APIs.
-4. On the Pi, add the line `GOOGLE_API_KEY=<the key>` to `~/.robo.env` and
+4. On the Pi, run `python3 setup_questions.py` and paste the key at question 2 (or add the line `GOOGLE_API_KEY=<the key>` to `~/.robo.env`), and
    restart the robot (`systemctl --user restart robo`). The self-check at
    start says "Google speech: key works", or what Google objected to.
 
@@ -159,7 +149,8 @@ Every program takes `--mock` and, where it listens, `--keyboard`.
 
 ## Make it yours
 
-Two things are personal and stay on your Pi, never in the repo:
+Two things are personal and stay on your Pi, never in the repo. `python3 setup_questions.py`
+asks for both and writes them; or by hand:
 
 1. **Your household.** Copy the example and edit it:
    `cp robo/family.example.yaml robo/family.yaml`. Without it the robot uses the example family.
